@@ -2,7 +2,9 @@
 import os
 from importlib.machinery import SourceFileLoader
 
-# Load config.cfg if it exists (local use)
+# =========================
+# LOAD config.cfg (OPTIONAL)
+# =========================
 try:
     cfg = SourceFileLoader('cfg', 'config.cfg').load_module()
 except Exception:
@@ -10,23 +12,43 @@ except Exception:
         pass
     cfg = DummyCfg()
 
-# Load version
-with open('.version', 'r') as f:
-    __version__ = f.read().strip()
+# =========================
+# LOAD VERSION SAFELY
+# =========================
+import os as _os
+VERSION_FILE = _os.path.join(_os.path.dirname(__file__), '..', '.version')
+try:
+    with open(VERSION_FILE, 'r') as f:
+        __version__ = f.read().strip()
+except FileNotFoundError:
+    __version__ = "unknown"
 
 # =========================
-# ENVIRONMENT OVERRIDES
+# DEFAULT CONFIG VALUES
 # =========================
 
-# Discord Bot Token
-if hasattr(cfg, "DC_TOKEN"):
-    cfg.DC_TOKEN = os.getenv("DC_TOKEN", cfg.DC_TOKEN)
+# Logging
+if not hasattr(cfg, "LOG_LEVEL"):
+    cfg.LOG_LEVEL = "INFO"
+
+# Discord owner (optional but used in permissions)
+if not hasattr(cfg, "DC_OWNER_ID"):
+    cfg.DC_OWNER_ID = 0
+
+# Slash servers
+if not hasattr(cfg, "DC_SLASH_SERVERS"):
+    cfg.DC_SLASH_SERVERS = []
+
+# =========================
+# DISCORD BOT TOKEN
+# =========================
+if hasattr(cfg, "DC_BOT_TOKEN"):
+    cfg.DC_BOT_TOKEN = os.getenv("DC_BOT_TOKEN", cfg.DC_BOT_TOKEN)
 else:
-    cfg.DC_TOKEN = os.getenv("DC_TOKEN")
+    cfg.DC_BOT_TOKEN = os.getenv("DC_BOT_TOKEN")
 
-# Safety check
-if not cfg.DC_TOKEN:
+if not cfg.DC_BOT_TOKEN:
     raise RuntimeError(
-        "DC_TOKEN is not set. "
+        "DC_BOT_TOKEN is not set. "
         "Set it in config.cfg (local) or as an environment variable (Render)."
     )
